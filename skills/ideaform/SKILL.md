@@ -289,6 +289,7 @@ VW_FFPROBE="$VW_FFPROBE" python3 scripts/verify-video.py video out/final.mp4 --f
 | 需要什么 | 用哪个 |
 |---|---|
 | 环境探测 / 补装 / 契约 | `ideaform-setup`（一次性） |
+| **新开源工具的现成 skill**（拿来主义：GitHub 收割 → 安检 → 落盘） | `ideaform-setup` 的 `scripts/harvest-skills.py <工具名>` |
 | **化学结构式 / 通路图的确定性图形** | 本技能的 `scripts/gen-structures.py`（RDKit → SVG → Remotion 组件） |
 | 更广的分子可视化（网格图 / 骨架高亮 / 3D 构象 / 蛋白-配体） | 外部现成 skill：`synthetic-sciences/openscience` 的 `molecule-visualization`（Apache-2.0）、`ghutchis/chem-skill`（MIT） |
 | LMMS 工程格式、插件参数、`eldata` 包络 | `electronic-music-production` + 其 `references/05` |
@@ -331,4 +332,6 @@ VW_FFPROBE="$VW_FFPROBE" python3 scripts/verify-video.py video out/final.mp4 --f
   ⚠️ **不要**在 `skills/ideaform/` 下另建 `docs/`——那是第二本账，会与正本编号撞车（2026-10-15 踩过，记 E19）。
 - 某条坑被脚本/文档**永久修好**（不是绕开）→ 把该条状态改 `已根治` 并注明修法。
 - 同一类坑踩到第二次 → 别记第三条，直接把防线写进脚本（校验器 / 默认值 / 契约）。
+- **引入新开源工具 → 先收割再动手**：`harvest-skills.py <工具名>` 找社区成熟 skill
+  （有分叉保护，不会覆盖你本地改过的）；找不到合格的才自己写。收割回来的 skill 踩了坑，一样记账。
 - 会话结束前扫一眼：有没有"修了但没记账"的。

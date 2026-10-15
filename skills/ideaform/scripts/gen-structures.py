@@ -459,9 +459,12 @@ def main() -> int:
     print("-" * 78)
 
     if not args.check and manifest:
-        barrel = "// 自动生成 · gen-structures.py（barrel）\n" + "".join(
-            f'export * from "./{m["component"]}";\n' for m in manifest
-        )
+        # ⚠️ 用**显式命名导出**，不用 `export *`：每个生成的组件都定义并导出同名的
+        #    `MolProps` 类型，`export *` 会让 TS 报 TS2308
+        #    「Module "./X" has already exported a member named 'MolProps'」。
+        barrel = ("// 自动生成 · gen-structures.py（barrel）\n"
+                  + "".join(f'export {{ {m["component"]} }} from "./{m["component"]}";\n'
+                            for m in manifest))
         (comp_dir / "index.ts").write_text(barrel, encoding="utf-8")
         (out / "manifest.json").write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")

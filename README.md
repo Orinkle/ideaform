@@ -12,7 +12,7 @@
 
 | Skill | 角色 | 生命周期 |
 |---|---|---|
-| `ideaform-setup` | **环境配置**：探测工具链 → 补装缺失 → 写路径契约 → 端到端冒烟校验 | **一次性**。配置完即禁用/归档/删除 |
+| `ideaform-setup` | **环境配置**：探测工具链 → 补装缺失 → 写路径契约 → **收割社区成熟 skill** → 端到端冒烟校验 | **一次性**。配置完即禁用/归档/删除 |
 | `ideaform` | **工作流**：读路径契约 → 跑四阶段流水线 | **长期**。每次都靠它生产视频 |
 
 两个 Skill 之间靠一个**中立的路径契约文件**通信，而不是靠互相 import。
@@ -70,10 +70,12 @@ ideaform/
 │   ├── ideaform-setup/              # ★ Skill A —— 环境配置（用完即弃）
 │   │   ├── SKILL.md
 │   │   ├── references/
-│   │   │   └── toolchain-matrix.md  # 每种工具的探测法 / 下载法 / 校验法
+│   │   │   ├── toolchain-matrix.md  # 每种工具的探测法 / 下载法 / 校验法
+│   │   │   └── skill-harvest.md     # 拿来主义协议：评分 / 安检 / 分叉保护
 │   │   └── scripts/
 │   │       ├── detect.py            # 只读探测，绝不改系统
 │   │       ├── install.sh           # 补装缺失项，全程记录 manifest
+│   │       ├── harvest-skills.py    # ★ 拿来主义：GitHub 收割成熟 skill → 安检 → 落盘
 │   │       ├── verify.py            # 端到端冒烟测试
 │   │       └── rollback.sh          # 按 manifest 逆序撤销
 │   └── ideaform/                    # ★ Skill B —— 工作流（长期）
@@ -107,10 +109,12 @@ Agent 会：
 
 1. **读环境配置 Skill** → 只读探测本机工具链（绝不动系统）
 2. 对缺失项**检索下载源** → 按 `references/toolchain-matrix.md` 补装
-3. **端到端冒烟校验** → 真的合成 1 秒语音、渲 1 帧画面、渲 1 秒音频
-4. **写路径契约** → `~/.config/ideaform/toolchain.json` + `env.sh`
-5. **询问是否禁用/归档/删除**环境配置 Skill（附回滚方案）
-6. 切换到工作流 Skill，**读契约**，开始四阶段生产
+3. **写路径契约** → `~/.config/ideaform/toolchain.json` + `env.sh`
+4. **收割社区成熟 skill** → `harvest-skills.py --from-contract` 给链上每个工具找现成 skill
+   （评分 → 安检 → 落盘；找不到合格的才自己写）
+5. **端到端冒烟校验** → 真的合成 1 秒语音、渲 1 帧画面、渲 1 秒音频
+6. **询问是否禁用/归档/删除**环境配置 Skill（附回滚方案）
+7. 切换到工作流 Skill，**读契约**，开始四阶段生产
 
 细节见 [`docs/01-快速开始.md`](docs/01-快速开始.md)。
 
@@ -175,6 +179,18 @@ Agent 会：
 模型看不到图像、听不到声音。所以每个阶段都有**客观校验器**：
 音频查 RMS/削波/哑条，画面查像素/走廊纯净度，成片查帧数与音轨码率。
 任何一项不过关就**拒绝交付**，不靠形容词。
+
+### 4. 拿来主义：新工具先收割，找不到才自己写
+
+配环境时 `harvest-skills.py` 会按契约给每个工具去 GitHub 找**社区成熟的 Agent Skill**
+（`filename:SKILL.md` 搜索 → stars/许可证/新鲜度评分 → 危险模式安检 → 落盘
+`~/.workbuddy/skills/` 并附 `_PROVENANCE.md` 来源凭证）。
+以后生产中引入任何新开源工具（如化学结构式绘制 → RDKit），同样先收割再动手。
+
+**落盘后的 skill 归你进化**：脚本用逐文件哈希做分叉检测，本地改过的绝不覆盖
+（上游新版放 `_upstream/` 供人工合并）。找不到合格候选的工具，才轮到自己写 ——
+本项目自身的两个 Skill 就是这么来的。
+协议详见 [`skills/ideaform-setup/references/skill-harvest.md`](skills/ideaform-setup/references/skill-harvest.md)。
 
 ---
 

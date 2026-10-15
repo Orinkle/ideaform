@@ -1,6 +1,6 @@
 ---
 name: ideaform-setup
-description: 构造主义解说视频工作流的**一次性环境配置**技能。下载项目后首次使用：只读探测本机工具链（Node/Python/ffmpeg/Remotion/LMMS/中文字体），对缺失项检索下载源并补装，做端到端冒烟校验，最后把解析出的绝对路径写成「路径契约」toolchain.json 交给工作流技能，并询问是否禁用/归档/删除本技能。当用户刚下载本项目、说"配环境""装工具链""跑不起来/命令找不到"时使用。
+description: 构造主义解说视频工作流的**一次性环境配置**技能。下载项目后首次使用：只读探测本机工具链（Node/Python/ffmpeg/Remotion/LMMS/中文字体），对缺失项检索下载源并补装，把解析出的绝对路径写成「路径契约」toolchain.json，再按契约去开源社区收割各工具的成熟 Agent Skill（拿来主义，harvest-skills.py），做端到端冒烟校验，最后询问是否禁用/归档/删除本技能。当用户刚下载本项目、说"配环境""装工具链""跑不起来/命令找不到"，或生产中引入新开源工具要找现成 skill 时使用。
 description_en: One-time environment setup for the constructivist video workflow. Probes the local toolchain read-only, installs what is missing, runs an end-to-end smoke test, then writes a resolved-path contract (toolchain.json) for the workflow skill and offers to disable/archive/delete itself.
 license: MIT
 agent_created: true
@@ -12,7 +12,7 @@ disable: false
 **目标**：把"这台机器上这些工具到底在哪"这件事问清楚，写成一份**路径契约**，
 然后功成身退。
 
-> **本技能的生命周期是"用完即弃"。** 不要让它常驻 —— 收尾时必须走 §6 的确认流程。
+> **本技能的生命周期是"用完即弃"。** 不要让它常驻 —— 收尾时必须走 §7 的确认流程。
 
 ---
 
@@ -102,7 +102,7 @@ bash skills/ideaform-setup/scripts/install.sh --only <tool1,tool2>
 
 不传 `--only` 则装所有 missing 项。脚本：
 - 装之前把将被覆盖的已有文件备份到 `$VW_CONFIG_ROOT/backup/<时间戳>/`
-- 每完成一步就向 `install-manifest.json` 追加一条记录
+- 每完成一步就向 `install-manifest.jsonl` 追加一条记录
 - 全部落用户级路径，**不需要 root**
 
 若某项必须用 root（极少见），脚本会**停下来打印命令**，让你转交用户在自己终端执行。
@@ -115,7 +115,30 @@ python3 skills/ideaform-setup/scripts/detect.py --write
 
 把解析结果落到 `toolchain.json` + `env.sh`。此时 `verified_at` 仍为 `null`。
 
-### 第 5 步 · 端到端冒烟校验（**必做，不许跳**）
+### 第 5 步 · 收割社区 Skill（拿来主义）
+
+契约写完，链上有哪些工具就确定了。**别急着靠自己那点存量知识上手，**
+**先把社区踩过坑的成熟 skill 拿过来：**
+
+```bash
+python3 skills/ideaform-setup/scripts/harvest-skills.py --from-contract            # 为链上工具逐个收割
+python3 skills/ideaform-setup/scripts/harvest-skills.py --from-contract --dry-run  # 先看候选名单再决定
+```
+
+脚本对每个工具：GitHub 搜 `filename:SKILL.md` → 按 stars/许可证/新鲜度评分 →
+安全扫描（命中危险模式的进 `_quarantine/` 隔离区，换下一个候选）→
+落盘 `~/.workbuddy/skills/<name>/`（附 `_PROVENANCE.md` 来源凭证）→ 记进 manifest。
+
+- **找不到合格候选 = 这个工具真得自己写 skill** —— 这正是本仓库 `skills/ideaform*` 存在的理由。
+- **落盘后的 skill 归你进化。** 脚本有分叉保护（`_harvest.json` 逐文件哈希）：
+  本地改过的默认不覆盖，`--force` 只升级没动过的，分叉的上游新版进 `_upstream/` 供人工合并。
+  见 [`references/skill-harvest.md`](references/skill-harvest.md) §4.1。
+- 完整协议（评分细则 / 安检模式 / 限额）见 [`references/skill-harvest.md`](references/skill-harvest.md)。
+
+> 这一步不只属于首次配置。**以后生产中引入任何新开源工具**（比如要做化学结构式
+> 绘制，想到 RDKit），第一件事都是 `harvest-skills.py rdkit` —— **先收割，再动手**。
+
+### 第 6 步 · 端到端冒烟校验（**必做，不许跳**）
 
 ```bash
 python3 skills/ideaform-setup/scripts/verify.py
@@ -138,9 +161,9 @@ python3 skills/ideaform-setup/scripts/verify.py
 全过 → 把 `verified_at` 盖进 `toolchain.json`。
 有不过 → **停下来报告哪一项、为什么**，修好再重跑。**不要盖章。**
 
-### 第 6 步 · 交接确认 + 收尾
+### 第 7 步 · 交接确认 + 收尾
 
-见 §6。
+见 §7。
 
 ---
 
@@ -203,7 +226,7 @@ bash skills/ideaform-setup/scripts/rollback.sh --yes       # 真回滚（逆序�
 
 ---
 
-## 6. ★ 收尾：禁用 / 归档 / 删除（必须让用户选）
+## 7. ★ 收尾：禁用 / 归档 / 删除（必须让用户选）
 
 冒烟测试通过后，**不要自动删自己**。按下面流程走：
 
@@ -247,7 +270,7 @@ test -f "$VW_CONFIG_ROOT/toolchain.json" && echo "契约仍在 ✓"
 
 ---
 
-## 7. 常见错误
+## 8. 常见错误
 
 | 现象 | 真因 | 处理 |
 |---|---|---|
@@ -262,7 +285,7 @@ test -f "$VW_CONFIG_ROOT/toolchain.json" && echo "契约仍在 ✓"
 
 ---
 
-## 8. 交接给谁
+## 9. 交接给谁
 
 配置完成后，**下一步是工作流技能**：
 

@@ -42,7 +42,7 @@ venv:   $VW_VENV → ~/.workbuddy/binaries/python/envs/default → 自建
 
 ```bash
 <python3> -m venv "$VW_CONFIG_ROOT/venv"
-export TMPDIR=<大盘>/tmp            # ★ 装包也吃 TMPDIR，见 §7
+export TMPDIR=<大盘>/tmp            # ★ 装包也吃 TMPDIR，见 §8
 "$VW_CONFIG_ROOT/venv/bin/pip" install -U pip
 ```
 
