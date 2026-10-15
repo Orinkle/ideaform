@@ -1,0 +1,37 @@
+# 产物与临时文件 —— 一律不入库
+out/
+output/
+build/
+dist/
+*.mp4
+*.wav
+*.mp3
+*.mmp
+*.mmpz
+*.png
+*.jpg
+!docs/**/*.png
+
+# 依赖
+node_modules
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 运行时契约 / 日志 / 备份（机器本地状态，绝不入库）
+.env
+*.local
+toolchain.json
+install-manifest.json
+install-manifest.jsonl
+logs/
+.tmp/
+.cache/
+.workbuddy/
+
+# 编辑器
+.DS_Store
+.idea/
+.vscode/
+*.swp

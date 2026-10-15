@@ -1,0 +1,10 @@
+node_modules/
+build/
+out/
+output/
+*.mp4
+*.png
+*.jpg
+*.wav
+*.mp3
+.tmp/

@@ -1,0 +1,32 @@
+// 由 make-tts-track.py --lines 生成：自然语速实测，勿手改时间码
+export const FPS = 30;
+export const TOTAL_FRAMES = 3797;
+export const CUES = [
+  { start: 15, end: 89, text: "你有没有过这种时刻。" },
+  { start: 98, end: 203, text: "一个想法在脑子里明明很清楚。" },
+  { start: 212, end: 335, text: "可一旦要说给别人听，它就散了。" },
+  { start: 344, end: 449, text: "不是想法不好，是它没有形态。" },
+  { start: 458, end: 564, text: "让一个想法成形，需要四样东西。" },
+  { start: 573, end: 702, text: "文稿、声音、画面、还有音乐。" },
+  { start: 711, end: 839, text: "过去要四个软件、四个人、四套流程。" },
+  { start: 848, end: 1000, text: "第一站是文稿。AI 把它展开成分层的解说稿。" },
+  { start: 1009, end: 1168, text: "第二站是声音。Edge TTS 把文稿读成解说音轨。" },
+  { start: 1177, end: 1324, text: "它走的是 Edge 浏览器朗读用的那条协议，不要密钥。" },
+  { start: 1333, end: 1477, text: "解说的自然语速，直接决定整条视频有多少帧。" },
+  { start: 1486, end: 1642, text: "第三站是画面。Remotion 用 React 描述画面。" },
+  { start: 1651, end: 1778, text: "然后在无头浏览器里，一帧一帧渲染出来。" },
+  { start: 1787, end: 1890, text: "画面不是剪出来的，是算出来的。" },
+  { start: 1899, end: 2076, text: "第四站是音乐。LMMS 是一套开源的音频工作站。" },
+  { start: 2085, end: 2233, text: "它照着解说的时间轴，为这条片子写一首小曲。" },
+  { start: 2242, end: 2362, text: "全片只用三个音的动机细胞，不换曲。" },
+  { start: 2371, end: 2485, text: "只在论述转向的地方，换一次形态。" },
+  { start: 2494, end: 2620, text: "音乐不只是划分段落，它还在牵引注意力。" },
+  { start: 2629, end: 2774, text: "讲到重点，它把力度抬起来，让那句话落得更重。" },
+  { start: 2783, end: 2922, text: "最后，ffmpeg 把画面和声音合成一个文件。" },
+  { start: 2931, end: 3046, text: "这些工具各管一段，本来互不认识。" },
+  { start: 3055, end: 3170, text: "ideaform 不写稿、不配音、也不排画面。" },
+  { start: 3179, end: 3327, text: "它只做两件事：把工具配好，把调用协调起来。" },
+  { start: 3336, end: 3455, text: "而且它看不到画面，也听不到声音。" },
+  { start: 3464, end: 3578, text: "所以每一步，都用像素和分贝来验收。" },
+  { start: 3587, end: 3752, text: "Ideaform，构想。让想法被看见，也被传递。" },
+] as const;

@@ -1,0 +1,26 @@
+{
+  "name": "ideaform-starter",
+  "version": "1.0.0",
+  "description": "构造主义解说视频 · Remotion 起始工程",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "render": "remotion render",
+    "still": "remotion still",
+    "compositions": "remotion compositions"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.515",
+    "@remotion/transitions": "4.0.515",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.515"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "ideaform-demo-episode",
+  "version": "1.0.0",
+  "description": "Ideaform 介绍视频（由 ideaform 工作流生产）",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "remotion studio",
+    "render": "remotion render",
+    "still": "remotion still",
+    "compositions": "remotion compositions"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.515",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.515"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "typescript": "5.9.3"
+  }
+}
