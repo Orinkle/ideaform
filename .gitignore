@@ -35,3 +35,6 @@ logs/
 .idea/
 .vscode/
 *.swp
+
+# 回收站（rm 被包装后的产物，绝不入库）
+.Trash-*/
