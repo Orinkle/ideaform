@@ -191,6 +191,23 @@ export const SCENES = {
 } as const;
 ```
 
+**结构式 / 信号通路 / 机理图 → 一律确定性生成，绝不用 AI 出图。**
+AI 画化学结构必然幻构键，而且**看不出错**——这类素材必须可复现、可校验。
+用 [`scripts/gen-structures.py`](scripts/gen-structures.py)：SMILES → RDKit 确定性描绘
+→ 帧驱动的 Remotion 组件。
+
+```bash
+python3 scripts/gen-structures.py --tsv structures.tsv --out structures
+#   → svg/*.svg  +  components/*.tsx（自带动画）  +  manifest.json
+#   → 分子式离线校验（RDKit CalcMolFormula），不符则非零退出，可直接串 `&&`
+```
+
+- 配色走 **RDKit 官方 options**（`useBWAtomPalette` / `singleColourBonds` / `setSymbolColour`），
+  **不要正则后处理 SVG 的颜色**——那是重复造轮子且随 RDKit 改版就碎（见错题本 E20）。
+- 生成的组件靠 CSS 变量 `--mol-dash` / `--mol-text` 驱动描线动画，**外层必须给 `color`**。
+- 需要网格图 / 骨架高亮 / 3D 构象 / 蛋白-配体相互作用图等**更广**的分子可视化，
+  先去找现成 skill（见 §7），别在视频流水线里硬塞。
+
 ### 5.2 音轨集成（两条路线，默认 A）
 
 **A. Remotion 集成（推荐）** —— composition 里用 `<Audio>`，渲出的 mp4 自带音轨：
@@ -272,6 +289,8 @@ VW_FFPROBE="$VW_FFPROBE" python3 scripts/verify-video.py video out/final.mp4 --f
 | 需要什么 | 用哪个 |
 |---|---|
 | 环境探测 / 补装 / 契约 | `ideaform-setup`（一次性） |
+| **化学结构式 / 通路图的确定性图形** | 本技能的 `scripts/gen-structures.py`（RDKit → SVG → Remotion 组件） |
+| 更广的分子可视化（网格图 / 骨架高亮 / 3D 构象 / 蛋白-配体） | 外部现成 skill：`synthetic-sciences/openscience` 的 `molecule-visualization`（Apache-2.0）、`ghutchis/chem-skill`（MIT） |
 | LMMS 工程格式、插件参数、`eldata` 包络 | `electronic-music-production` + 其 `references/05` |
 | 作曲法（和声、动机、无听觉作曲、涌现） | `electronic-music-production` 的 `references/06`–`10` |
 | Remotion 语法与渲染细节 | `remotion-best-practices` |
