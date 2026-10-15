@@ -58,7 +58,7 @@ source "$(dirname "$CONTRACT")/env.sh"     # 导出 VW_NODE / VW_VENV / VW_FFMPE
 > 都会写它 → `ENOSPC`。每条 Remotion 命令都要带 `TMPDIR`。
 
 > ⚠️ **路径一律不做 `resolve`（软链解析）。** 托管工具链路径里含软链，
-> 解析 venv 解释器会丢掉 venv 上下文，包全部 import 不到。见 `docs/03-路径契约.md`。
+> 解析 venv 解释器会丢掉 venv 上下文，包全部 import 不到。见**仓库根** `docs/03-路径契约.md`。
 
 ---
 
@@ -124,6 +124,10 @@ source "$(dirname "$CONTRACT")/env.sh"     # 导出 VW_NODE / VW_VENV / VW_FFMPE
 
 同一个脚本也能做反过来的事（已有 SRT、时间码定死时用两段式调速适配），
 但那是**补救**不是首选。详见 [`references/stage2-tts.md`](references/stage2-tts.md)。
+
+> ⚠️ **禁止向用户索取"成片多少分钟"。** 时长 = 语速 × 台词量，是**输出**，不是**输入**；
+> 开工时既不该问、也不该给"标准版 X 分钟"这类选项。只报「按这份文稿，实测 X 分 Y 秒」。
+> 用户要更长/更短 → 改的是**文稿**，不是时间。（2026-10-15 桂花片踩过，记 E16）
 
 **出口**：`plan.json` 里每条有 `start/end/dur/frameStart/frameEnd`；
 `timeline.ts` 可直接 `cp` 进 Remotion 工程当 `src/timeline.ts`。
@@ -304,7 +308,8 @@ VW_FFPROBE="$VW_FFPROBE" python3 scripts/verify-video.py video out/final.mp4 --f
 
 本工作流是**可变的复合 skill**——用着用着，它应该越来越贴合你的生产节奏：
 
-- 踩了坑、修完那一刻 → 记进 `docs/06-错题本.md`（六栏格式，编号顺延）。
+- 踩了坑、修完那一刻 → 记进**仓库根** `docs/06-错题本.md`（六栏格式，编号顺延）。
+  ⚠️ **不要**在 `skills/ideaform/` 下另建 `docs/`——那是第二本账，会与正本编号撞车（2026-10-15 踩过，记 E19）。
 - 某条坑被脚本/文档**永久修好**（不是绕开）→ 把该条状态改 `已根治` 并注明修法。
 - 同一类坑踩到第二次 → 别记第三条，直接把防线写进脚本（校验器 / 默认值 / 契约）。
 - 会话结束前扫一眼：有没有"修了但没记账"的。

@@ -17,9 +17,12 @@
 #
 # 依据（实测）：BGM 应比旁白低 8~12 dB 才是「衬底」而不是「伴奏」。
 #   RATE=0.17 只压到之下 5.6 dB，对密集口播明显偏吵。
+#
+# 电平：默认把成片峰值收到 --peak（默认 -1.0 dBFS）。amix 必须显式 normalize=0，
+#   否则每个输入各被除以输入数（2 路 = -6.02 dB），成片会整体掉 6 dB（踩过）。
 set -uo pipefail
 
-VOICE=""; BGM=""; VIDEO=""; OUT="final.mp4"; DROP=9.0; PLAN_ONLY=0; KEEP_TMP=0
+VOICE=""; BGM=""; VIDEO=""; OUT="final.mp4"; DROP=9.0; PLAN_ONLY=0; KEEP_TMP=0; PEAK=-1.0
 CONTRACT="${VW_CONTRACT:-${VW_CONFIG_ROOT:-$HOME/.config/ideaform}/toolchain.json}"
 
 while [ $# -gt 0 ]; do
@@ -29,9 +32,10 @@ while [ $# -gt 0 ]; do
     --video) VIDEO="${2:-}"; shift ;;
     --out)   OUT="${2:-}"; shift ;;
     --drop)  DROP="${2:-}"; shift ;;
+    --peak)  PEAK="${2:-}"; shift ;;
     --plan-only) PLAN_ONLY=1 ;;
     --keep-tmp)  KEEP_TMP=1 ;;
-    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,24p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
   shift
@@ -94,6 +98,36 @@ drop, v, b = float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3])
 gain = (v - drop) - b          # 想让 BGM 落在旁白之下 drop dB，需要加多少 dB
 print(f'{gain:.2f}', f'{10**(gain/20):.4f}')" "$1" "$2" "$3"; }
 
+# ── 实测峰值（同 reasoning：精简版 ffmpeg 没有 astats/volumedetect）──
+peak_db(){ "$PY" - "$1" <<'PYEOF'
+import wave, array, math, sys, os, subprocess, tempfile
+p = sys.argv[1]; tmp = None
+if not p.lower().endswith(".wav"):
+    ff = os.environ.get("VW_FFMPEG") or os.environ.get("FFMPEG") or "ffmpeg"
+    tmp = os.path.join(os.environ.get("TMPDIR") or tempfile.gettempdir(),
+                       "peak-probe-" + os.path.basename(p) + ".wav")
+    subprocess.run([ff, "-y", "-v", "error", "-i", p, "-ac", "1", "-ar", "48000",
+                    "-c:a", "pcm_s16le", tmp], check=True)
+    p = tmp
+try:
+    with wave.open(p) as w:
+        n = w.getnframes()
+        a = array.array("h"); a.frombytes(w.readframes(n))
+    pk = max((abs(x) for x in a), default=0)
+    print(f"{20*math.log10(pk/32768):.2f}" if pk > 0 else "-99.00")
+finally:
+    if tmp and os.path.exists(tmp):
+        os.remove(tmp)
+PYEOF
+}
+
+# 把实测峰值收到 target：返回 (dB, 线性)。夹在 [-24,+6] dB 防异常输入把音量拉爆。
+peak_trim(){ "$PY" -c "
+import sys
+t, m = float(sys.argv[1]), float(sys.argv[2])
+g = max(-24.0, min(6.0, t - m))
+print(f'{g:.2f}', f'{10**(g/20):.4f}')" "$1" "$2"; }
+
 echo "════════════════════════════════════════════════════════"
 echo "  音轨集成"
 echo "════════════════════════════════════════════════════════"
@@ -129,16 +163,35 @@ echo
 dim "→ 路线 B 后合成（显式 -map 0:v:0 -map 1:a:0 …）"
 if [ -n "$BGM" ] && [ -n "$BR" ]; then
   read -r GDB GFAC <<<"$(gain_of "$DROP" "$VR" "$BR")"
+  # ★★ amix 必须显式 normalize=0。默认 normalize=1 会把每个输入各除以输入数
+  #    （2 路 → -6.02 dB）：旁白与 BGM 一起掉 6 dB，**相对平衡还在，所以听不出"错"，
+  #    但整片电平比设计目标低 6 dB**（实测成片峰值 -6.69 dBFS vs 解说轨既定 -1.00 dBFS）。
+  #    这是历史上白白丢掉 6 dB 的根因，2026-10-15 桂花片踩到，记 E08。
+  # 两遍法：先只混音轨（不编码视频，秒级）测真实峰值，再算精确 headroom，
+  #    既不削波，又精确踩在 --peak 目标上（比按峰值上界估更准）。
+  PROBE="$TMPDIR/mix-av-peak-probe.wav"
+  dim "→ 混音探针（只混音轨，实测真实峰值）"
+  "$FF" -y -v error -i "$VOICE" -i "$BGM" \
+        -filter_complex "[1:a]volume=${GFAC}[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[ax]" \
+        -map "[ax]" -ac 2 -ar 48000 -c:a pcm_s16le "$PROBE" \
+      || { err "混音探针失败"; exit 1; }
+  PM="$(peak_db "$PROBE")"
+  read -r TDB TFAC <<<"$(peak_trim "$PEAK" "$PM")"
+  dim "  探针峰值 ${PM} dBFS → 目标 ${PEAK} dBFS ⇒ ${TDB} dB (volume=${TFAC})"
+  # ★ 不用 -shortest：它会把视频多砍十几帧（实测 10066→10053，AAC priming 导致
+  #   音频流实际结束点早于容器报告值）。音轨长度由 amix duration=first 限死，
+  #   而流水线里视频帧数本就由 TTS 音轨导出（voice ≤ video），不会音频超长。
   "$FF" -y -v error -i "$VIDEO" -i "$VOICE" -i "$BGM" \
-        -filter_complex "[2:a]volume=${GFAC}[bg];[1:a][bg]amix=inputs=2:duration=first:dropout_transition=0[ax]" \
+        -filter_complex "[2:a]volume=${GFAC}[bg];[1:a][bg]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,volume=${TFAC}[ax]" \
         -map 0:v:0 -map "[ax]" \
-        -c:v copy -c:a aac -b:a 192k -ar 48000 -ac 2 -shortest "$OUT" \
+        -c:v copy -c:a aac -b:a 192k -ar 48000 -ac 2 "$OUT" \
     || { err "合流失败"; exit 1; }
+  [ "$KEEP_TMP" = 1 ] || rm -f "$PROBE"
 else
   warn "缺 voice 或 bgm，退化为单音轨合流"
   "$FF" -y -v error -i "$VIDEO" -i "${VOICE:-$BGM}" \
         -map 0:v:0 -map 1:a:0 \
-        -c:v copy -c:a aac -b:a 192k -ar 48000 -ac 2 -shortest "$OUT" \
+        -c:v copy -c:a aac -b:a 192k -ar 48000 -ac 2 "$OUT" \
     || { err "合流失败"; exit 1; }
 fi
 
@@ -151,6 +204,7 @@ echo "  音轨码率 $AB bps    帧数 $NB    音轨时长 ${DUR}s"
 if [ "${AB:-0}" -gt 64000 ]; then ok "音轨非静音"; else err "音轨疑似静音（${AB} bps）→ 检查 -map"; fi
 ok "成片: $OUT  ($(du -h "$OUT" | cut -f1))"
 echo
-echo "  下一步：校验成片"
-echo "    $PY skills/ideaform/scripts/verify-video.py video $OUT --frames $NB"
+echo "  下一步：校验成片（--frames 必须填**规划总帧数**，不要填 $NB——"
+echo "    拿实际帧数当期望值会把砍帧偏差 masking 掉，本脚本历史上就吃过这个亏）"
+echo "    $PY skills/ideaform/scripts/verify-video.py video $OUT --frames <TOTAL_FRAMES>"
 echo "════════════════════════════════════════════════════════"
