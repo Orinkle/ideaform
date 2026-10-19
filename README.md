@@ -13,6 +13,9 @@
 > 🧬 姊妹项目：[bio_ideaform](https://github.com/Orinkle/bio_ideaform) —— 本工作流的**生物特化版**：
 > 画面层升级为三维分子动画（Blender + PyMOL），适合把论文 / 分子机制做成科普视频。
 
+> 🧬 姊妹项目：[bio_ideaform](https://github.com/Orinkle/bio_ideaform) —— 本工作流的**生物特化版**：
+> 画面层升级为三维分子动画（Blender + PyMOL），适合把论文 / 分子机制做成科普视频。
+
 | Skill | 角色 | 生命周期 |
 |---|---|---|
 | `ideaform-setup` | **环境配置**：探测工具链 → 补装缺失 → 写路径契约 → **收割社区成熟 skill** → 端到端冒烟校验 | **一次性**。配置完即禁用/归档/删除 |
